@@ -1,0 +1,30 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# Install system dependencies including Python dev for scikit-learn
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements first for better caching
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy app files
+COPY . .
+
+# We're using the simplified analyzer so we don't need to download models
+# But we'll copy our simplified analyzer file
+COPY simple_analyzer.py /app/simple_analyzer.py
+
+# Initialize database
+RUN python initialize_db.py
+
+# Expose port for the API
+EXPOSE 5000
+
+# Command to run the API
+CMD ["python", "app.py"]
